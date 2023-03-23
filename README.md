@@ -28,7 +28,7 @@ And I know DB isn't the correct term for this, but I couldn't think of a better 
 
 ## How to use
 
-For now, you can't. I am still working on it.
+For now, it is not recommended for use. But if you want to try it out, you can follow the steps below.
 
 ## How to install
 
