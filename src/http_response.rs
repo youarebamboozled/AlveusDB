@@ -7,6 +7,7 @@ pub(crate) struct HttpResponse {
     pub(crate) content: String,
 }
 
+#[allow(dead_code)]
 impl HttpResponse {
     pub(crate) fn new() -> HttpResponse {
         HttpResponse {

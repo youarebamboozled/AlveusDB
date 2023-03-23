@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
-use std::io::{BufReader, Read, Write};
+use std::io::{Read, Write};
 use crate::debug;
 
 
@@ -26,6 +25,7 @@ pub struct Query {
     pub content: Option<String>,
 }
 
+#[allow(dead_code)]
 impl Query {
     pub fn new(database: String, table: String, content: Option<String>) -> Query {
         Query {

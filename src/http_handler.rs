@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-use std::net::{TcpListener, TcpStream};
+use std::net::{TcpStream};
 use std::io::{Read, Write};
-use crate::{error, debug, info, warn, verbose, fatal};
+use crate::{error, debug, info};
 use crate::http_response::{HttpResponse};
 use crate::http_header::HttpHeader;
 use std::time::Instant;
 use crate::json::{Query, QueryResultType, read, write};
-use std::io::ErrorKind;
 
 
 pub(crate) fn handle_request(mut stream: &TcpStream) {
@@ -155,7 +153,7 @@ fn db_handler(binding: String) -> HttpResponse {
     response
 }
 
-fn db_get_handler(body: &str, header: &str) -> HttpResponse {
+fn db_get_handler(_body: &str, header: &str) -> HttpResponse {
     let mut response = HttpResponse::new();
     response.protocol = "HTTP/1.1".to_string();
     response.status_code = 200;
@@ -266,6 +264,7 @@ fn index() -> HttpResponse {
     response
 }
 
+#[allow(dead_code)]
 fn dummy_response(path: &str, method: &str) -> HttpResponse {
     let mut response = HttpResponse::new();
     response.protocol = "HTTP/1.1".to_string();

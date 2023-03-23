@@ -1,9 +1,5 @@
-use std::borrow::Cow;
-use std::net::{TcpListener, TcpStream};
-use std::io::{Read, Write};
-use crate::{error, debug, info, warn, verbose, fatal};
-use crate::http_response::{HttpResponse};
-use crate::http_header::HttpHeader;
+use std::net::{TcpListener};
+use crate::{error, info};
 use crate::http_handler::handle_request;
 
 pub(crate) struct Listener {
