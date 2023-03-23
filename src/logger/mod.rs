@@ -13,7 +13,10 @@ pub(crate) struct Builder {
 impl Builder {
     pub(crate) fn new() -> Self {
         Self {
-            level: log_level::LogLevel::Info,
+            // get log level from environment variable
+            level: log_level::LogLevel::from_str(
+                std::env::var("ALVEUS_LOG").unwrap_or("info".to_string()).as_str(),
+            ).unwrap_or(log_level::LogLevel::Info),
             write_to_console: true,
             write_to_file: false,
             file_path: "".to_string(),
