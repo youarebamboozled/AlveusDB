@@ -8,6 +8,7 @@ use crate::json::{Query, QueryResultType, read, write};
 
 
 pub(crate) fn handle_request(mut stream: &TcpStream) {
+    stream.set_read_timeout(Some(std::time::Duration::from_secs(2))).unwrap();
     let start = Instant::now();
     let mut first_buffer = [0; 1024];
     match stream.read(&mut first_buffer) {
@@ -83,8 +84,19 @@ pub(crate) fn handle_request(mut stream: &TcpStream) {
             }
             return;
         }
-        // read the rest of the request if the first buffer is not big enough
-        if content_length > first_buffer.len() {
+        // check if first uffer is full
+        let binding = String::from_utf8_lossy(&first_buffer[..]);
+        let header = binding.split("\r\n\r\n").collect::<Vec<&str>>()[0];
+        let body = binding.split("\r\n\r\n").collect::<Vec<&str>>()[1];
+        let body = body.replace("\0", "");
+        debug!("Body size: {} bytes", body.len().to_string());
+        debug!("Header size: {} bytes", header.len().to_string());
+        debug!("temp: {} bytes", body.len() + header.len());
+        debug!("Content length: {} bytes", content_length.to_string());
+        if body.len() + header.len() + 4 == 1024 { //TODO: fix all of this
+            debug!("First buffer is full");
+        }
+        if body.len() + header.len() + 4 >= 1024 && body.len() + header.len() + 4 == 1024 && content_length != body.len() {
             debug!("Content length is bigger than the first buffer, reading the rest of the request");
             let mut second_buffer = vec![0; content_length];
             match stream.read(&mut second_buffer) {
