@@ -80,8 +80,26 @@ pub fn write(query: &Query) -> QueryResult {
         return result;
     }
 
-    let query_json: serde_json::Value = serde_json::from_str(&query.content.clone().unwrap()).unwrap();
-    let json = serde_json::to_string(&query_json).unwrap();
+    let query_json: serde_json::Value = match serde_json::from_str(
+        match &query.content.clone() {
+        Some(content) => content,
+        None => "",
+    }) {
+        Ok(value) => value,
+        Err(e) => {
+            result.status = QueryResultType::Error;
+            result.message = format!("query content is not valid json: {}", e);
+            return result;
+        }
+    };
+    let json = match serde_json::to_string(&query_json) {
+        Ok(json) => json,
+        Err(e) => {
+            result.status = QueryResultType::Error;
+            result.message = format!("query content is not valid json: {}", e);
+            return result;
+        }
+    };
 
     match file.write_all(json.as_bytes()) {
         Err(e) => {
@@ -122,13 +140,43 @@ pub fn read(query: &Query) -> QueryResult {
         return result;
     }
 
-    let mut file = OpenOptions::new()
+    let mut file = match OpenOptions::new()
         .read(true)
-        .open(format!("db/{}/{}.json", query.database, query.table))
-        .unwrap();
+        .open(format!("db/{}/{}.json", query.database, query.table)) {
+            Ok(file) => file,
+            Err(e) => {
+                let result = QueryResult {
+                    status: QueryResultType::Error,
+                    message: format!("error opening file: {}", e),
+                    query: Query {
+                        database: query.database.clone(),
+                        table: query.table.clone(),
+                        content: query.content.clone(),
+                    },
+                };
+                return result;
+            }
+    };
+
 
     let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
+    match file.read_to_string(&mut contents) {
+        Ok(_) => {
+            debug!("File read successfully");
+        }
+        Err(e) => {
+            let result = QueryResult {
+                status: QueryResultType::Error,
+                message: format!("error reading file: {}", e),
+                query: Query {
+                    database: query.database.clone(),
+                    table: query.table.clone(),
+                    content: query.content.clone(),
+                },
+            };
+            return result;
+        }
+    }
 
     let result = QueryResult {
         status: QueryResultType::Success,
