@@ -1,14 +1,18 @@
 mod logger;
+mod listener;
+mod utils;
+mod http_response;
+mod http_header;
+mod http_handler;
+
 use crate::logger::log_level::LogLevel;
 
 fn main() {
     logger::Builder::new()
         .level(LogLevel::Debug)
         .build();
-    info!("This is an info message");
-    debug!("This is a debug message");
-    verbose!("This is a verbose message");
-    warn!("This is a warn message");
-    error!("This is an error message");
-    fatal!("This is a fatal message");
+    debug!("Logger initialized");
+
+    let listener = listener::Listener::new();
+    listener.listen();
 }
