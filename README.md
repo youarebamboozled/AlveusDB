@@ -22,6 +22,7 @@ I am also learning Rust as I go so the code is probably not the best. I am open 
 * Security (because it won't be open to the public and only accessible from the local network)
 * Data encryption (because it won't be open to the public and only accessible from the local network)
 * Data compression (for now at least because we don't have that much data)
+* Using any HTTP framework (because I want to learn how to do it myself)
 
 ## How to use
 
