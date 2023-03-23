@@ -16,6 +16,7 @@ I am also learning Rust as I go so the code is probably not the best. I am open 
 * Easy to install
 * Easy to use for Arma Reforger mods using the built-in Web Request Module(which is broken at the moment)
 * Rules for adding data to the database to prevent bad data from being added
+* Readability of saved data without the need for a database viewer (e.g. JSON)
 
 ## Non-Goals
 
