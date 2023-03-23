@@ -32,7 +32,33 @@ For now, you can't. I am still working on it.
 
 ## How to install
 
-For now, you can't. I am still working on it.
+### Building from source
+
+#### Requirements
+
+* Rust (nightly)
+* Cargo
+* Git
+
+#### Steps
+
+1. Clone the repository
+2. Run `cargo build --release`
+3. Execute the binary in `target/release/`
+4. Go to `http://localhost:8080/` in your browser
+5. You should see a minimalistic web page with some text
+6. You are done
+
+### Using the pre-built binaries
+
+#### Steps
+
+1. Download the latest release from the [releases page](#)
+   1. extract the zip file if needed
+2. Execute the binary
+3. Go to `http://localhost:8080/` in your browser
+4. You should see a minimalistic web page with some text
+5. You are done
 
 ## How to contribute
 
