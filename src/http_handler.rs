@@ -9,7 +9,7 @@ use crate::json::{Query, QueryResultType, read, write};
 
 pub(crate) fn handle_request(mut stream: &TcpStream) {
     let start = Instant::now();
-    let mut first_buffer = [0; 256];
+    let mut first_buffer = [0; 1024];
     match stream.read(&mut first_buffer) {
         Ok(_) => {}
         Err(e) => {
@@ -135,8 +135,12 @@ pub(crate) fn handle_request(mut stream: &TcpStream) {
             "unknown".to_string()
         }
     };
-    info!("{} {} {} {} {}", ip, req_method, path, response.status_code.to_string(),
-        response.content.split("time\": \"").collect::<Vec<&str>>()[1].split("\"").collect::<Vec<&str>>()[0]);
+    if response.status_code == 200 && response.content.contains("time\": \"") {
+        info!("{} {} {} {} {}", ip, req_method, path, response.status_code.to_string(),
+            response.content.split("time\": \"").collect::<Vec<&str>>()[1].split("\"").collect::<Vec<&str>>()[0]);
+    } else {
+        info!("{} {} {} {}", ip, req_method, path, response.status_code.to_string());
+    }
 }
 
 fn db_handler(binding: String) -> HttpResponse {
@@ -147,6 +151,7 @@ fn db_handler(binding: String) -> HttpResponse {
     let response = match req_method {
         "GET" => db_get_handler(body, header),
         "POST" => db_post_handler(body, header),
+        "/favicon.ico" => favicon(),
         _ => unsupported_method(),
     };
 
@@ -260,7 +265,7 @@ fn index() -> HttpResponse {
     response.status_code = 200;
     response.header = HttpHeader::new()
         .with_content_type("text/html".to_string());
-    response.content = "<h1>Hello World!</h1>".to_string();
+    response.content = "<h1> AlveusDB </h1> <p> A simple database server written in Rust </p> <p> The corresponding <a href=\"https://github.com/youarebamboozled/AlveusDB\">Github</a> </p>".to_string();
     response
 }
 
@@ -272,5 +277,15 @@ fn dummy_response(path: &str, method: &str) -> HttpResponse {
     response.header = HttpHeader::new()
         .with_content_type("text/html".to_string());
     response.content = format!("{} - {} - {}", path, method, response.status_code.to_string()).to_string();
+    response
+}
+
+fn favicon() -> HttpResponse {
+    let mut response = HttpResponse::new();
+    response.protocol = "HTTP/1.1".to_string();
+    response.status_code = 200;
+    response.header = HttpHeader::new()
+        .with_content_type("image/x-icon".to_string());
+    response.content = "".to_string();
     response
 }
