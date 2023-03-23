@@ -6,6 +6,7 @@ AlveusDB will be a database for storing and querying data from Arma Reforger Mod
 
 This is a work in progress and is not ready for use. I am not a database expert and this is my first attempt at creating a database. 
 I am also learning Rust as I go so the code is probably not the best. I am open to suggestions and pull requests.
+And I know DB isn't the correct term for this, but I couldn't think of a better one.
 
 ## Goals
 
