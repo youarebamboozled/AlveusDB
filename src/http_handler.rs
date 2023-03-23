@@ -13,16 +13,37 @@ pub(crate) fn handle_request(mut stream: &TcpStream) {
     let start = Instant::now();
     let mut first_buffer = [0; 256];
     stream.read(&mut first_buffer).unwrap();
+    let mut buffer = first_buffer.to_vec();
 
     // get the content length from the request and read the rest of the request
-    let content_length = String::from_utf8_lossy(&first_buffer[..]).split("Content-Length: ").collect::<Vec<&str>>()[1].split("\r\n").collect::<Vec<&str>>()[0].parse::<usize>().unwrap();
-    let mut second_buffer = vec![0; content_length];
-    debug!("Content length: {}", content_length);
-    stream.read(&mut second_buffer).unwrap();
+    if String::from_utf8_lossy(&first_buffer[..]).contains("Content-Length: ") == false  && String::from_utf8_lossy(&first_buffer[..]).contains("GET") == false {
+        error!("Content-Length header not found");
+        let response = HttpResponse::new()
+            .with_status_code(400)
+            .with_header(HttpHeader::new().with_content_type("application/json".to_string()))
+            .with_content("{\"status\": \"error\", \"message\": \"Content-Length header not found\"}".to_string());
+        stream.write(response.to_string().as_bytes()).unwrap();
+        stream.flush().unwrap();
+        return;
+    }
+    if String::from_utf8_lossy(&first_buffer[..]).contains("GET") == false {
+        let content_length = String::from_utf8_lossy(&first_buffer[..]).split("Content-Length: ").collect::<Vec<&str>>()[1].split("\r\n").collect::<Vec<&str>>()[0].parse::<usize>().unwrap();
+        if content_length <= 0 {
+            error!("No content found");
+            let response = HttpResponse::new()
+                .with_status_code(400)
+                .with_header(HttpHeader::new().with_content_type("application/json".to_string()))
+                .with_content("{\"status\": \"error\", \"message\": \"No content found\"}".to_string());
+            stream.write(response.to_string().as_bytes()).unwrap();
+            stream.flush().unwrap();
+            return;
+        }
+        let mut second_buffer = vec![0; content_length];
+        stream.read(&mut second_buffer).unwrap();
 
-    let mut buffer = first_buffer.to_vec();
-    buffer.append(&mut second_buffer);
-
+        buffer = first_buffer.to_vec();
+        buffer.append(&mut second_buffer);
+    }
     // get the path from the request
     let binding = String::from_utf8_lossy(&buffer[..]);
     //remove every \0 from the string
