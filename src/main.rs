@@ -35,8 +35,24 @@ AAAAAAA                   AAAAAAllllllll         vvv           eeeeeeeeeeeeee   
 
                                                                                                                                                      ");
 
+    // get args
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() > 1 {
+        if args[1] == "help" || args[1] == "-h"{
+            println!("Usage: {} <options>", args[0].split("\\").last().unwrap_or("alveus.exe"));
+            println!("Options:");
+            println!("\t--help, -h\tShow this help message");
+            println!("\t--debug, -d\tEnable debug logging");
+            return;
+        } else if args[1] == "--debug" || args[1] == "-d" {
+            std::env::set_var("ALVEUS_LOG", LogLevel::Debug.to_string());
+        } else {
+            println!("Unknown argument: {}", args[1]);
+            return;
+        }
+    }
+
     logger::Builder::new()
-        .level(LogLevel::Debug)
         .build();
     debug!("Logger initialized");
 
