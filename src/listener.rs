@@ -25,7 +25,7 @@ impl Listener {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
-                    handle_request(stream);
+                    handle_request(&stream);
                 }
                 Err(e) => {
                     error!("Error while trying to listen: {}", e); //TODO: change the err message
