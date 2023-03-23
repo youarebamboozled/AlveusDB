@@ -29,7 +29,7 @@ For now, you can't. I am still working on it.
 
 ## How to install
 
-[How to use](#how-to-use)
+For now, you can't. I am still working on it.
 
 ## How to contribute
 
