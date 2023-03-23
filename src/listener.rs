@@ -20,8 +20,14 @@ impl Listener {
     }
 
     pub(crate) fn listen(&self) {
-        let listener = TcpListener::bind(format!("{}:{}", self.address, self.port.to_string())).unwrap();
-        println!("Listening on {}:{}", self.address, self.port.to_string());
+        let listener = match TcpListener::bind(format!("{}:{}", self.address, self.port.to_string())) {
+            Ok(listener) => listener,
+            Err(e) => {
+                error!("Error while trying to listen: {}", e);
+                return;
+            }
+        };
+        info!("Listening on {}:{}", self.address, self.port.to_string());
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
