@@ -12,7 +12,13 @@ use std::io::ErrorKind;
 pub(crate) fn handle_request(mut stream: &TcpStream) {
     let start = Instant::now();
     let mut first_buffer = [0; 256];
-    stream.read(&mut first_buffer).unwrap();
+    match stream.read(&mut first_buffer) {
+        Ok(_) => {}
+        Err(e) => {
+            error!("Error while trying to read the stream: {}", e);
+            return;
+        }
+    }
     let mut buffer = first_buffer.to_vec();
 
     // get the content length from the request and read the rest of the request
@@ -22,24 +28,72 @@ pub(crate) fn handle_request(mut stream: &TcpStream) {
             .with_status_code(400)
             .with_header(HttpHeader::new().with_content_type("application/json".to_string()))
             .with_content("{\"status\": \"error\", \"message\": \"Content-Length header not found\"}".to_string());
-        stream.write(response.to_string().as_bytes()).unwrap();
-        stream.flush().unwrap();
+        match stream.write(response.to_string().as_bytes()) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error while trying to write to the stream: {}", e);
+            }
+        }
+        match stream.flush() {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error while trying to flush the stream: {}", e);
+            }
+        }
         return;
     }
     if String::from_utf8_lossy(&first_buffer[..]).contains("GET") == false {
-        let content_length = String::from_utf8_lossy(&first_buffer[..]).split("Content-Length: ").collect::<Vec<&str>>()[1].split("\r\n").collect::<Vec<&str>>()[0].parse::<usize>().unwrap();
+        let content_length = match String::from_utf8_lossy(&first_buffer[..]).split("Content-Length: ").collect::<Vec<&str>>()[1].split("\r\n").collect::<Vec<&str>>()[0].parse::<usize>() {
+            Ok(n) => n,
+            Err(e) => {
+                error!("Error while trying to parse the content length: {}", e);
+                let response = HttpResponse::new()
+                    .with_status_code(400)
+                    .with_header(HttpHeader::new().with_content_type("application/json".to_string()))
+                    .with_content("{\"status\": \"error\", \"message\": \"Error while trying to parse the content length\"}".to_string());
+                match stream.write(response.to_string().as_bytes()) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("Error while trying to write to the stream: {}", e);
+                    }
+                }
+                match stream.flush() {
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("Error while trying to flush the stream: {}", e);
+                    }
+                }
+                return;
+            }
+        };
         if content_length <= 0 {
             error!("No content found");
             let response = HttpResponse::new()
                 .with_status_code(400)
                 .with_header(HttpHeader::new().with_content_type("application/json".to_string()))
                 .with_content("{\"status\": \"error\", \"message\": \"No content found\"}".to_string());
-            stream.write(response.to_string().as_bytes()).unwrap();
-            stream.flush().unwrap();
+            match stream.write(response.to_string().as_bytes()) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!("Error while trying to write to the stream: {}", e);
+                }
+            }
+            match stream.flush() {
+                Ok(_) => {}
+                Err(e) => {
+                    error!("Error while trying to flush the stream: {}", e);
+                }
+            }
             return;
         }
         let mut second_buffer = vec![0; content_length];
-        stream.read(&mut second_buffer).unwrap();
+        match stream.read(&mut second_buffer) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error while trying to read the stream: {}", e);
+                return;
+            }
+        }
 
         buffer = first_buffer.to_vec();
         buffer.append(&mut second_buffer);
@@ -62,11 +116,27 @@ pub(crate) fn handle_request(mut stream: &TcpStream) {
     let end = Instant::now();
     let duration = end.duration_since(start);
     debug!("Request took {}µs", duration.as_micros());
-    stream.write(response.to_string().as_bytes()).unwrap();
-    stream.flush().unwrap();
+    match stream.write(response.to_string().as_bytes()) {
+        Ok(_) => {}
+        Err(e) => {
+            error!("Error while trying to write to the stream: {}", e);
+        }
+    }
+    match stream.flush() {
+        Ok(_) => {}
+        Err(e) => {
+            error!("Error while trying to flush the stream: {}", e);
+        }
+    }
     // log the request in this format:
     // [IP] [METHOD] [PATH] [STATUS CODE] [TIME]
-    let ip = stream.peer_addr().unwrap().ip().to_string();
+    let ip = match stream.peer_addr() {
+        Ok(addr) => addr.ip().to_string(),
+        Err(e) => {
+            error!("Error while trying to get the ip address: {}", e);
+            "unknown".to_string()
+        }
+    };
     info!("{} {} {} {} {}", ip, req_method, path, response.status_code.to_string(),
         response.content.split("time\": \"").collect::<Vec<&str>>()[1].split("\"").collect::<Vec<&str>>()[0]);
 }
@@ -112,7 +182,10 @@ fn db_get_handler(body: &str, header: &str) -> HttpResponse {
     let time = duration.as_micros();
     match result.status {
         QueryResultType::Success => {
-            response.content = r#"{"time": ""#.to_string() + &time.to_string() + r#"μs", "data": "# + &result.query.content.unwrap() + r#"}"#;
+            response.content = r#"{"time": ""#.to_string() + &time.to_string() + r#"μs", "data": "# + match &result.query.content {
+                Some(content) => content,
+                None => "",
+            } + r#"}"#;
         },
         QueryResultType::Error => {
             response.status_code = 500;
@@ -149,7 +222,10 @@ fn db_post_handler(body: &str, header: &str) -> HttpResponse {
     let time = duration.as_micros();
     match result.status {
         QueryResultType::Success => {
-            response.content = r#"{"time": ""#.to_string() + &time.to_string() + r#"μs", "data": "# + &result.query.content.unwrap() + r#"}"#;
+            response.content = r#"{"time": ""#.to_string() + &time.to_string() + r#"μs", "data": "# + match &result.query.content {
+                Some(content) => content,
+                None => "",
+            } + r#"}"#;
         },
         QueryResultType::Error => {
             response.status_code = 500;
