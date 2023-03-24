@@ -1,6 +1,6 @@
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
-use crate::debug;
+use crate::{debug, error};
 
 
 #[derive(Debug)]
@@ -87,6 +87,8 @@ pub fn write(query: &Query) -> QueryResult {
     }) {
         Ok(value) => value,
         Err(e) => {
+            error!("query content is not valid json: {}", e);
+            debug!("query content: {}", query.content.clone().unwrap());
             result.status = QueryResultType::Error;
             result.message = format!("query content is not valid json: {}", e);
             return result;
