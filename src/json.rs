@@ -3,12 +3,32 @@ use std::io::{Read, Write};
 use crate::{debug, error};
 
 
+/// QueryResultType is an enum that represents the type of a query result.
+/// It can either be a success or an error.
+///
+/// # Examples
+///
+/// ```no_run
+/// use crate::json::QueryResultType;
+///
+/// let success = QueryResultType::Success;
+/// let error = QueryResultType::Error;
+/// ```
+///
+/// # Values
+///
+/// [QueryResultType::Success](enum.QueryResultType.html#variant.Success)
+///
+/// [QueryResultType::Error](enum.QueryResultType.html#variant.Error)
 #[derive(Debug)]
 pub enum QueryResultType {
+    /// Success represents a successful query result.
     Success,
     Error,
 }
 
+/// Implement PartialEq for QueryResultType.
+/// This allows us to compare two QueryResultType values.
 impl PartialEq for QueryResultType {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -19,9 +39,40 @@ impl PartialEq for QueryResultType {
     }
 }
 
+/// Query represents a query to the database.
+/// It contains the database, table, and content of the query.
+/// The content is an optional string.
+/// If the query is a read query, the content will be None.
+/// If the query is a write query, the content will be Some(String).
+///
+/// # Examples
+///
+/// ```no_run
+/// use crate::json::Query;
+///
+/// let query = Query::new("database".to_string(), "table".to_string(), None);
+/// ```
+///
+/// # Values
+///
+/// [Query::new](struct.Query.html#method.new)
+///
+/// [Query::database](struct.Query.html#structfield.database)
+///
+/// [Query::table](struct.Query.html#structfield.table)
+///
+/// [Query::content](struct.Query.html#structfield.content)
+///
 pub struct Query {
+    /// The database of the query.
+    /// This is the name of the database that the query is being made to.
     pub database: String,
+    /// The table of the query.
+    /// This is the name of the table that the query is being made to.
     pub table: String,
+    /// The content of the query.
+    /// This is the data that is being written to the database.
+    /// If the query is a read query, the content will be None.
     pub content: Option<String>,
 }
 
@@ -42,12 +93,61 @@ impl std::fmt::Display for Query {
     }
 }
 
+/// QueryResult represents the result of a query.
+/// It contains the status, message, and query of the result.
+///
+/// # Examples
+///
+/// ```no_run
+/// use crate::json::{Query, QueryResult, QueryResultType};
+///
+/// let query = Query::new("database".to_string(), "table".to_string(), None);
+/// let result = QueryResult::new(QueryResultType::Success, "query processed successfully".to_string(), query);
+/// ```
+///
+/// # Values
+///
+/// [QueryResult::status](struct.QueryResult.html#structfield.status)
+///
+/// [QueryResult::message](struct.QueryResult.html#structfield.message)
+///
+/// [QueryResult::query](struct.QueryResult.html#structfield.query)
+///
 pub struct QueryResult {
+    /// The status of the query result.
+    /// This is either QueryResultType::Success or QueryResultType::Error.
     pub status: QueryResultType,
+    /// The message of the query result.
+    /// This is a string that describes the result of the query.
+    /// If the query was successful, the message will be "query processed successfully".
+    /// If the query was not successful, the message will be an error message.
     pub message: String,
+    /// The query of the query result.
+    /// This is the query that was made to the database.
+    /// It contains the database, table, and content of the query.
     pub query: Query,
 }
 
+/// write is a function that writes a query to the database.
+/// It takes a Query as an argument and returns a QueryResult.
+///
+/// # Examples
+///
+/// ```no_run
+/// use crate::json::{Query, QueryResult, QueryResultType, write};
+///
+/// let query = Query::new("database".to_string(), "table".to_string(), Some("content".to_string()));
+/// let result = write(&query);
+/// ```
+///
+/// # Arguments
+///
+/// * `query` - A Query that is being written to the database.
+///
+/// # Returns
+///
+/// * `QueryResult` - A QueryResult that contains the result of the query.
+///
 pub fn write(query: &Query) -> QueryResult {
     let mut result = QueryResult {
         status: QueryResultType::Success,
@@ -115,6 +215,27 @@ pub fn write(query: &Query) -> QueryResult {
     result
 }
 
+
+/// read is a function that reads a query from the database.
+/// It takes a Query as an argument and returns a QueryResult.
+///
+/// # Examples
+///
+/// ```no_run
+/// use crate::json::{Query, QueryResult, QueryResultType, read};
+///
+/// let query = Query::new("database".to_string(), "table".to_string(), None);
+/// let result = read(&query);
+/// ```
+///
+/// # Arguments
+///
+/// * `query` - A Query that is being read from the database.
+///
+/// # Returns
+///
+/// * `QueryResult` - A QueryResult that contains the result of the query.
+///
 pub fn read(query: &Query) -> QueryResult {
     //check if table exists
     if !std::path::Path::new(&format!("db/{}", query.database)).exists() {
